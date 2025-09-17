@@ -57,6 +57,7 @@ class EditorApp(QWidget):
         col1.addWidget(self.clr)
         col1.addWidget(self.contrast)
 
+        col1.addWidget(self.blur)
         col2.addWidget(self.image_box)
 
         master_layout.addLayout(col1, 20)
@@ -99,6 +100,8 @@ class EditorApp(QWidget):
          self.contrast.clicked.connect(self.editor.contrast)
          self.btn_left.clicked.connect(self.editor.left)
          self.btn_right.clicked.connect(self.editor.right)
+         self.blur.clicked.connect(self.editor.blur)
+         self.choice_cb.currentTextChanged.connect(self.editor.handle_filter)
 
     def displayImage(self):
          if self.options_list.currentRow()>=0:
@@ -185,6 +188,49 @@ class Editor():
          self.save_image()
          image_path = os.path.join(self.ea.working_dir, self.save_folder, self.filename)
          self.show_image(image_path)
+
+    def blur(self):
+         self.image=ImageEnhance.Sharpness(self.image).enhance(0.0)
+         self.save_image()
+         image_path = os.path.join(self.ea.working_dir, self.save_folder, self.filename)
+         self.show_image(image_path)
+
+
+    def apply_filter(self, filter_name):
+          if filter_name =="Original":
+              self.image=self.original.copy()
+          else:
+               mapping = {
+                    "Left": lambda image: image.transpose(Image.ROTATE_90),
+                    "Right": lambda image: image.transpose(Image.ROTATE_270),
+                    "Mirror":lambda image: image.transpose(Image.FLIP_LEFT_RIGHT),
+                    "Sharpen": lambda image: ImageEnhance.Sharpness(image).enhance(1.2),
+                    "B/W":lambda image: image.convert("L"),
+                    "Color": lambda image: ImageEnhance.Color(image).enhance(1.2),
+                    "Contrast": lambda image: ImageEnhance.Contrast(image).enhance(1.2),
+                    "Blur": lambda image: ImageEnhance.Sharpness(image).enhance(0.0)
+           
+               }
+               filter_func = mapping.get(filter_name)
+               if filter_func:
+                    self.image = filter_func(self.image)
+                    self.save_image()
+                    image_path = os.path.join(self.ea.working_dir, self.save_folder, self.filename)
+                    self.show_image(image_path)
+               pass
+
+          self.save_image()
+          image_path = os.path.join(self.ea.working_dir, self.save_folder, self.filename)
+          self.show_image(image_path)
+
+    def handle_filter(self):
+         if self.ea.options_list.currentRow()>=0:
+              select_filter = self.ea.choice_cb.currentText()
+              self.apply_filter(select_filter)
+
+     
+         
+         
 
 
 #Run
